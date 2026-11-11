@@ -1,50 +1,46 @@
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from apps.core.views import BaseListView, BaseCreateView, BaseUpdateView, BaseDeleteView
 from .models import Proveedor
+from .forms import ProveedorForm
 
-@login_required
-def listado(request):
-    q = request.GET.get("q", "").strip()
-    registros = Proveedor.objects.all()
-    if q:
-        campos = [f.name for f in Proveedor._meta.fields if getattr(f, "get_internal_type", lambda: "")() in ("CharField","TextField","EmailField")]
-        from django.db.models import Q
-        filtro = Q()
-        for campo in campos: filtro |= Q(**{f"{campo}__icontains": q})
-        registros = registros.filter(filtro)
-    return render(request, "modulo/listado.html", {"titulo": "Proveedores", "registros": registros, "q": q})
+class ProveedorListView(BaseListView):
+    model = Proveedor
+    titulo = "Registro de Proveedores"
+    subtitulo = "Gestiona los proveedores de cacao, empaques e insumos chocolateros."
+    search_fields = ["razon_social", "ruc", "contacto", "telefono", "email"]
+    columnas = [
+        {"campo": "ruc", "titulo": "RUC"},
+        {"campo": "razon_social", "titulo": "Razón Social", "destacado": True},
+        {"campo": "contacto", "titulo": "Persona de Contacto"},
+        {"campo": "telefono", "titulo": "Teléfono"},
+        {"campo": "email", "titulo": "Correo Electrónico"},
+        {"campo": "estado", "titulo": "Estado", "tipo": "badge"},
+    ]
+    url_crear = "proveedores:crear"
+    url_editar = "proveedores:editar"
+    url_eliminar = "proveedores:eliminar"
+    roles_permitidos = ["Administrador", "Almacenero"]
 
-@login_required
-def crear(request):
-    if request.method == "POST":
-        from .forms import ProveedorForm
-        form = ProveedorForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Registro creado correctamente.")
-            return redirect("proveedores_listado")
-    else:
-        from .forms import ProveedorForm
-        form = ProveedorForm()
-    return render(request, "modulo/formulario.html", {"titulo": "Nuevo registro", "form": form})
 
-@login_required
-def editar(request, pk):
-    objeto = get_object_or_404(Proveedor, pk=pk)
-    from .forms import ProveedorForm
-    form = ProveedorForm(request.POST or None, request.FILES or None, instance=objeto)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Registro actualizado correctamente.")
-        return redirect("proveedores_listado")
-    return render(request, "modulo/formulario.html", {"titulo": "Editar registro", "form": form})
+class ProveedorCreateView(BaseCreateView):
+    model = Proveedor
+    form_class = ProveedorForm
+    titulo = "Nuevo Proveedor"
+    subtitulo = "Registra los datos de un nuevo proveedor comercial."
+    success_url = reverse_lazy("proveedores:listado")
+    roles_permitidos = ["Administrador", "Almacenero"]
 
-@login_required
-def eliminar(request, pk):
-    objeto = get_object_or_404(Proveedor, pk=pk)
-    if request.method == "POST":
-        objeto.delete()
-        messages.success(request, "Registro eliminado correctamente.")
-        return redirect("proveedores_listado")
-    return render(request, "modulo/confirmar_eliminar.html", {"objeto": objeto})
+
+class ProveedorUpdateView(BaseUpdateView):
+    model = Proveedor
+    form_class = ProveedorForm
+    titulo = "Editar Proveedor"
+    subtitulo = "Actualiza la información comercial del proveedor."
+    success_url = reverse_lazy("proveedores:listado")
+    roles_permitidos = ["Administrador", "Almacenero"]
+
+
+class ProveedorDeleteView(BaseDeleteView):
+    model = Proveedor
+    success_url = reverse_lazy("proveedores:listado")
+    roles_permitidos = ["Administrador"]

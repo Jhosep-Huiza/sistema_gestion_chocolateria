@@ -1,8 +1,10 @@
-from django import forms
+from apps.core.forms import BaseModelForm
 from .models import Cliente
 
-class ClienteForm(forms.ModelForm):
+class ClienteForm(BaseModelForm):
     class Meta:
         model = Cliente
-        fields = "__all__"
-        widgets = {field: forms.TextInput(attrs={"class":"form-control"}) for field in []}
+        fields = [
+            "tipo_documento", "numero_documento", "nombres",
+            "telefono", "email", "direccion", "estado"
+        ]

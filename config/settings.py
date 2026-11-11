@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localh
 INSTALLED_APPS = [
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
     "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
+    "apps.core",
     "apps.usuarios", "apps.clientes", "apps.productos", "apps.proveedores",
     "apps.compras", "apps.inventario", "apps.ventas", "apps.devoluciones",
     "apps.caja", "apps.finanzas", "apps.reportes", "apps.configuracion",
@@ -29,6 +30,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.usuarios.middleware.ContextoAuditoriaMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

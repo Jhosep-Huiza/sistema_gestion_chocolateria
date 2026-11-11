@@ -8,3 +8,19 @@ class Usuario(AbstractUser):
     REQUIRED_FIELDS = ["email", "nombres", "apellidos"]
     class Meta: db_table = "usuarios"
     def __str__(self): return f"{self.nombres} {self.apellidos}"
+
+    @property
+    def es_administrador(self):
+        return self.is_superuser or (self.rol is not None and self.rol.nombre == "Administrador")
+
+    @property
+    def es_vendedor(self):
+        return self.es_administrador or (self.rol is not None and self.rol.nombre == "Vendedor")
+
+    @property
+    def es_cajero(self):
+        return self.es_administrador or (self.rol is not None and self.rol.nombre == "Cajero")
+
+    @property
+    def es_almacenero(self):
+        return self.es_administrador or (self.rol is not None and self.rol.nombre == "Almacenero")

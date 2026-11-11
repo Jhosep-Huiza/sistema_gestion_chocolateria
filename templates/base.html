@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}ChocoGest{% endblock %}</title>
+  <title>{% block title %}{{ nombre_negocio|default:"ChocoGest" }}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
@@ -13,28 +13,90 @@
 {% if user.is_authenticated %}
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="{% url 'dashboard' %}"><span class="brand-mark">C</span><span><b>ChocoGest</b><small>GESTIÓN COMERCIAL</small></span></a>
+    <a class="brand" href="{% url 'dashboard' %}">
+      {% if logo_negocio %}
+        <img src="{{ logo_negocio.url }}" alt="{{ nombre_negocio }}" style="width: 38px; height: 38px; border-radius: 10px; object-fit: cover;">
+      {% else %}
+        <span class="brand-mark">C</span>
+      {% endif %}
+      <span><b>{{ nombre_negocio|default:"ChocoGest" }}</b><small>GESTIÓN COMERCIAL</small></span>
+    </a>
     <div class="nav-caption">MENÚ PRINCIPAL</div>
     <nav class="nav">
       <a href="{% url 'dashboard' %}">▦ <span>Dashboard</span></a>
-      <a href="{% url 'productos_listado' %}">▣ <span>Productos</span></a>
-      <a href="{% url 'clientes_listado' %}">♙ <span>Clientes</span></a>
-      <a href="{% url 'proveedores_listado' %}">♧ <span>Proveedores</span></a>
-      <a href="{% url 'compras:inicio' %}">⇩ <span>Compras</span></a>
-      <a href="{% url 'inventario:inicio' %}">▤ <span>Inventario</span></a>
-      <a href="{% url 'ventas:inicio' %}">▧ <span>Ventas / POS</span></a>
-      <a href="{% url 'devoluciones:inicio' %}">↶ <span>Devoluciones</span></a>
-      <a href="{% url 'caja:inicio' %}">▣ <span>Caja</span></a>
-      <a href="{% url 'finanzas:inicio' %}">◈ <span>Finanzas</span></a>
-      <a href="/admin/">⚙ <span>Administración</span></a>
+
+      {% if user.es_administrador or user.es_almacenero or user.es_vendedor %}
+        <a href="{% url 'productos:listado' %}">▣ <span>Productos</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_vendedor %}
+        <a href="{% url 'clientes:listado' %}">♙ <span>Clientes</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_almacenero %}
+        <a href="{% url 'proveedores:listado' %}">♧ <span>Proveedores</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_almacenero %}
+        <a href="{% url 'compras:inicio' %}">⇩ <span>Compras</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_almacenero %}
+        <a href="{% url 'inventario:inicio' %}">▤ <span>Inventario</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_vendedor or user.es_cajero %}
+        <a href="{% url 'ventas:inicio' %}">▧ <span>Ventas / POS</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_vendedor %}
+        <a href="{% url 'devoluciones:inicio' %}">↶ <span>Devoluciones</span></a>
+      {% endif %}
+
+      {% if user.es_administrador or user.es_cajero %}
+        <a href="{% url 'caja:inicio' %}">▣ <span>Caja</span></a>
+      {% endif %}
+
+      {% if user.es_administrador %}
+        <a href="{% url 'finanzas:inicio' %}">◈ <span>Finanzas</span></a>
+        <a href="{% url 'reportes:inicio' %}">📈 <span>Reportes</span></a>
+        <a href="{% url 'configuracion:inicio' %}">⚙ <span>Configuración</span></a>
+        <a href="{% url 'usuarios:listado' %}">👥 <span>Usuarios</span></a>
+      {% endif %}
+
+      {% if user.is_superuser or user.is_staff %}
+        <a href="/admin/">🔒 <span>Django Admin</span></a>
+      {% endif %}
+
+      <a href="{% url 'usuarios:perfil' %}">♙ <span>Mi perfil</span></a>
     </nav>
-    <div class="sidebar-bottom"><span class="status-dot"></span> Sistema operativo</div>
+    <div class="sidebar-bottom"><span class="status-dot"></span> {{ user.rol.nombre|default:"Sistema operativo" }}</div>
   </aside>
   <main class="main-area">
-    <header class="topbar"><button class="menu-toggle" id="menuToggle">☰</button><div><span class="eyebrow">PANEL DE CONTROL</span><strong>{% block page_heading %}Resumen general{% endblock %}</strong></div><div class="user-chip"><span class="avatar">{{ user.nombres|default:user.username|first|upper }}</span><span>{{ user.get_full_name|default:user.username }}</span><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="logout">Salir</button></form></div></header>
-    {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle">☰</button>
+      <div>
+        <span class="eyebrow">PANEL DE CONTROL</span>
+        <strong>{% block page_heading %}Resumen general{% endblock %}</strong>
+      </div>
+      <div class="user-chip">
+        <span class="avatar">{{ user.nombres|default:user.username|first|upper }}</span>
+        <span><b>{{ user.get_full_name|default:user.username }}</b> <small style="color: var(--muted); font-size: 10px;">({{ user.rol.nombre|default:"Usuario" }})</small></span>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="logout" type="submit">Salir</button>
+        </form>
+      </div>
+    </header>
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
     <section class="content">{% block content %}{% endblock %}</section>
-    <footer class="footer">© {% now "Y" %} ChocoGest · Gestión inteligente para tu chocolatería</footer>
+    <footer class="footer">© {% now "Y" %} {{ nombre_negocio|default:"ChocoGest" }} · Gestión inteligente para tu chocolatería</footer>
   </main>
 </div>
 {% else %}

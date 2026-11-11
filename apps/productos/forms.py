@@ -1,8 +1,24 @@
 from django import forms
-from .models import Producto
+from apps.core.forms import BaseModelForm
+from .models import Producto, Categoria, Marca
 
-class ProductoForm(forms.ModelForm):
+class CategoriaForm(BaseModelForm):
+    class Meta:
+        model = Categoria
+        fields = ["nombre", "descripcion", "imagen", "estado"]
+
+
+class MarcaForm(BaseModelForm):
+    class Meta:
+        model = Marca
+        fields = ["nombre", "descripcion", "estado"]
+
+
+class ProductoForm(BaseModelForm):
     class Meta:
         model = Producto
-        fields = "__all__"
-        widgets = {field: forms.TextInput(attrs={"class":"form-control"}) for field in []}
+        fields = [
+            "categoria", "marca", "codigo", "codigo_barras", "nombre",
+            "descripcion", "peso_gramos", "precio_compra_referencial",
+            "precio_venta", "stock_minimo", "imagen", "estado"
+        ]

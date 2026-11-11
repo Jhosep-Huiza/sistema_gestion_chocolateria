@@ -3,9 +3,10 @@ from django.db import transaction
 from django.utils import timezone
 from apps.compras.models import Compra
 from apps.inventario.models import Almacen, Inventario, Lote, MovimientoInventario
+from apps.usuarios.services import registrar_auditoria
 
 @transaction.atomic
-def recibir_compra(*, compra_id, almacen_id, usuario, lotes_por_detalle):
+def recibir_compra(*, compra_id, almacen_id, usuario, lotes_por_detalle, direccion_ip=None):
     """
     Confirma una compra pendiente y registra lotes, existencias y movimientos.
     lotes_por_detalle: {detalle_compra_id: [
@@ -62,4 +63,9 @@ def recibir_compra(*, compra_id, almacen_id, usuario, lotes_por_detalle):
 
     compra.estado = "RECIBIDA"
     compra.save(update_fields=["estado"])
+    registrar_auditoria(
+        usuario=usuario, accion="RECEPCION_COMPRA_STOCK", tabla_afectada="inventario",
+        registro_id=compra.pk, descripcion=f"Recepción de compra {compra.numero_compra} en {almacen}.",
+        direccion_ip=direccion_ip,
+    )
     return compra

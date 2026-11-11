@@ -16,5 +16,18 @@
   </tbody></table></div></section>
   <section class="panel alerts"><div class="panel-heading"><div><span class="eyebrow">INVENTARIO</span><h2>Alertas</h2></div></div><div class="alert-item"><span class="alert-symbol">!</span><div><b>Stock bajo o agotado</b><small>{{ stock_bajo }} productos requieren revisión</small></div></div><div class="alert-item"><span class="alert-symbol">◷</span><div><b>Próximos vencimientos</b><small>{{ lotes_por_vencer }} lotes vencen en los próximos 30 días</small></div></div><a class="text-link" href="{% url 'inventario:inicio' %}">Revisar inventario →</a></section>
 </div>
-<div class="quick-actions"><a href="{% url 'productos_crear' %}">＋ Nuevo producto</a><a href="{% url 'clientes_crear' %}">＋ Nuevo cliente</a><a href="{% url 'proveedores_crear' %}">＋ Nuevo proveedor</a><a href="/admin/">⚙ Administrar datos</a></div>
+<div class="quick-actions">
+  {% if user.es_administrador or user.es_almacenero %}
+    <a href="{% url 'productos:crear' %}">＋ Nuevo producto</a>
+  {% endif %}
+  {% if user.es_administrador or user.es_vendedor %}
+    <a href="{% url 'clientes:crear' %}">＋ Nuevo cliente</a>
+  {% endif %}
+  {% if user.es_administrador or user.es_almacenero %}
+    <a href="{% url 'proveedores:crear' %}">＋ Nuevo proveedor</a>
+  {% endif %}
+  {% if user.es_administrador %}
+    <a href="{% url 'configuracion:inicio' %}">⚙ Configuración</a>
+  {% endif %}
+</div>
 {% endblock %}

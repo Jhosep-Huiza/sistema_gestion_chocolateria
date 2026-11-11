@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from apps.core.mixins import requiere_roles
 from django.db.models import Sum
 from django.shortcuts import render
 from apps.productos.models import Producto
@@ -22,3 +23,7 @@ def dashboard(request):
         "ventas_recientes": Venta.objects.select_related("cliente","usuario").order_by("-fecha_venta")[:7],
     }
     return render(request, "dashboard.html", context)
+
+@requiere_roles("Administrador")
+def inicio(request):
+    return render(request, "modulo/en_construccion.html", {"titulo": "Reportes y Estadísticas"})

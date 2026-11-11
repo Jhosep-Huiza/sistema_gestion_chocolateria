@@ -1,4 +1,35 @@
 {% extends "base.html" %}
+
 {% block title %}Confirmar eliminación | ChocoGest{% endblock %}
-{% block page_heading %}Eliminar registro{% endblock %}
-{% block content %}<section class="panel form-panel"><h1>¿Deseas eliminar este registro?</h1><p>Vas a eliminar: <b>{{ objeto }}</b>. Si tiene movimientos relacionados, el sistema puede impedirlo para proteger el historial.</p><form method="post">{% csrf_token %}<button class="btn-danger" type="submit">Confirmar eliminación</button> <a class="btn-secondary" href="javascript:history.back()">Cancelar</a></form></section>{% endblock %}
+{% block page_heading %}{{ titulo|default:"Eliminar registro" }}{% endblock %}
+
+{% block content %}
+<div class="welcome-row">
+  <div>
+    <span class="eyebrow">ELIMINAR REGISTRO</span>
+    <h1>¿Deseas eliminar este registro?</h1>
+    <p>Esta acción removerá el registro del sistema o lo desactivará si tiene relaciones históricas.</p>
+  </div>
+</div>
+
+<section class="panel form-panel">
+  <p style="font-size: 15px; margin-bottom: 20px;">
+    Vas a eliminar: <b style="color: var(--cocoa);">{{ objeto }}</b>.
+  </p>
+  <p class="field-help" style="margin-bottom: 25px;">
+    Si el registro cuenta con movimientos o transacciones vinculadas (ventas, compras, pagos o inventario), el sistema protegerá la integridad de los datos desactivándolo en lugar de borrarlo físicamente.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-actions" style="justify-content: flex-start;">
+      <button class="btn-danger" type="submit">Confirmar eliminación</button>
+      {% if url_cancelar %}
+        <a class="btn-secondary" href="{{ url_cancelar }}">Cancelar y volver</a>
+      {% else %}
+        <a class="btn-secondary" href="javascript:history.back()">Cancelar y volver</a>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{% endblock %}

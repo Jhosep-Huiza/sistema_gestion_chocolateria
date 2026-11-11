@@ -737,3 +737,149 @@ td b {
         display: none
     }
 }
+
+/* ==========================================================================
+   Extensiones Fase 1 - Formularios, Listados y Paginación
+   ========================================================================== */
+
+/* Badges de estado */
+.pill-success {
+    background: #e7f2e8 !important;
+    color: #426b49 !important;
+}
+
+.pill-danger {
+    background: #fae8e5 !important;
+    color: #9a4035 !important;
+}
+
+.pill-warning {
+    background: #fdf2dc !important;
+    color: #8c6828 !important;
+}
+
+.pill-info {
+    background: #e5edf5 !important;
+    color: #3b5f85 !important;
+}
+
+/* Formularios estructurados */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: #d9534f;
+    background: #fffafa;
+}
+
+.form-group.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.form-group.checkbox-group label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.form-group.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--cocoa);
+    cursor: pointer;
+}
+
+.required-star {
+    color: #a64235;
+    font-weight: 700;
+    margin-left: 3px;
+}
+
+.field-error {
+    color: #a64235;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.field-help {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* Paginación elegante */
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+}
+
+.pagination-info {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.pagination {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.page-link {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--cocoa);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all .2s;
+}
+
+.page-link:hover {
+    background: #f2e8d8;
+    border-color: var(--gold);
+    color: var(--cocoa-2);
+}
+
+.page-current {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cocoa);
+    padding: 0 8px;
+}
+
+/* Miniaturas en tablas */
+.table-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    vertical-align: middle;
+}
+
+.text-muted {
+    color: var(--muted);
+}
+
+.text-right {
+    text-align: right;
+}

@@ -1,6 +1,6 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+from apps.core.mixins import requiere_roles
 
-@login_required
+@requiere_roles("Vendedor", "Cajero")
 def inicio(request):
     return render(request, "modulo/en_construccion.html", {"titulo": "Ventas"})
