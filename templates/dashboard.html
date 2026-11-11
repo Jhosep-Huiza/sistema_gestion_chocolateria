@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | ChocoGest{% endblock %}
+{% block page_heading %}Resumen general{% endblock %}
+{% block content %}
+<div class="welcome-row"><div><span class="eyebrow">BIENVENIDO A CHOCOGEST</span><h1>Panel de control</h1><p>Este es el resumen de actividad de tu chocolatería.</p></div><div class="date-pill">● Operación diaria</div></div>
+<div class="stats-grid">
+  <article class="stat-card"><span class="stat-icon">▣</span><small>Productos activos</small><strong>{{ productos_count }}</strong><span class="stat-note">En catálogo</span></article>
+  <article class="stat-card"><span class="stat-icon">♙</span><small>Clientes registrados</small><strong>{{ clientes_count }}</strong><span class="stat-note">Base de clientes</span></article>
+  <article class="stat-card accent"><span class="stat-icon">S/</span><small>Ventas de hoy</small><strong>S/ {{ ventas_hoy|floatformat:2 }}</strong><span class="stat-note">Ventas confirmadas y parciales</span></article>
+  <article class="stat-card"><span class="stat-icon">⇩</span><small>Compras pendientes</small><strong>{{ compras_pendientes }}</strong><span class="stat-note">Por recibir</span></article>
+</div>
+<div class="dashboard-grid">
+  <section class="panel"><div class="panel-heading"><div><span class="eyebrow">ACTIVIDAD</span><h2>Ventas recientes</h2></div><a href="{% url 'ventas:inicio' %}">Ver módulo →</a></div>
+  <div class="table-wrap"><table><thead><tr><th>Venta</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead><tbody>
+  {% for venta in ventas_recientes %}<tr><td><b>{{ venta.numero_venta }}</b></td><td>{{ venta.cliente|default:"Cliente ocasional" }}</td><td>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td><td>S/ {{ venta.total|floatformat:2 }}</td><td><span class="pill">{{ venta.get_estado_display }}</span></td></tr>{% empty %}<tr><td colspan="5" class="empty">Todavía no hay ventas registradas.</td></tr>{% endfor %}
+  </tbody></table></div></section>
+  <section class="panel alerts"><div class="panel-heading"><div><span class="eyebrow">INVENTARIO</span><h2>Alertas</h2></div></div><div class="alert-item"><span class="alert-symbol">!</span><div><b>Stock bajo o agotado</b><small>{{ stock_bajo }} productos requieren revisión</small></div></div><div class="alert-item"><span class="alert-symbol">◷</span><div><b>Próximos vencimientos</b><small>{{ lotes_por_vencer }} lotes vencen en los próximos 30 días</small></div></div><a class="text-link" href="{% url 'inventario:inicio' %}">Revisar inventario →</a></section>
+</div>
+<div class="quick-actions"><a href="{% url 'productos_crear' %}">＋ Nuevo producto</a><a href="{% url 'clientes_crear' %}">＋ Nuevo cliente</a><a href="{% url 'proveedores_crear' %}">＋ Nuevo proveedor</a><a href="/admin/">⚙ Administrar datos</a></div>
+{% endblock %}

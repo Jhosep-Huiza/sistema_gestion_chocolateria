@@ -1,0 +1,4 @@
+app_name = "finanzas"
+from django.urls import path
+from . import views
+urlpatterns = [path("", views.inicio, name="inicio")]

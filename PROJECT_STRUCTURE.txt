@@ -1,0 +1,7 @@
+ChocoGest
+- config/: settings, URLs, ASGI/WSGI
+- apps/: aplicaciones funcionales separadas
+- cada aplicación mantiene modelos por archivo dentro de models/
+- templates/: interfaz HTML compartida
+- static/: CSS y JavaScript
+- media/: archivos subidos en tiempo de ejecución

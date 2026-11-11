@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Punto de venta | ChocoGest{% endblock %}
+{% block page_heading %}Punto de venta{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pos.css' %}">{% endblock %}
+{% block content %}
+<div class="pos-heading"><div><span class="eyebrow">VENTAS</span><h1>Punto de venta</h1><p>Registra una venta y actualiza tu inventario en un solo paso.</p></div><a class="pos-secondary" href="{% url 'ventas:historial' %}">Ver historial <span>↗</span></a></div>
+{% if not caja_abierta %}
+<section class="cash-start"><div class="cash-icon">▣</div><div class="cash-copy"><h2>Antes de vender, abre tu caja</h2><p>Registra el efectivo inicial disponible para comenzar tu jornada.</p></div><form method="post" class="cash-open-form">{% csrf_token %}<input type="hidden" name="accion" value="abrir_caja"><label for="monto_inicial">Monto inicial (S/)</label><div class="cash-input"><span>S/</span><input id="monto_inicial" name="monto_inicial" type="number" min="0" step="0.01" value="0.00" required></div><button class="pos-primary" type="submit">Abrir caja</button></form></section>
+{% else %}
+<div class="pos-stats"><div><span class="stat-icon">▣</span><span><small>CAJA ACTIVA</small><b>Abierta</b></span></div><div><span class="stat-icon">▤</span><span><small>FONDO INICIAL</small><b>S/ {{ caja_abierta.monto_inicial|floatformat:2 }}</b></span></div><div><span class="stat-icon">↗</span><span><small>VENTAS DE HOY</small><b>{{ ventas_hoy }}</b></span></div></div>
+<div class="pos-layout">
+  <section class="catalog-panel">
+    <div class="catalog-top"><div><h2>Catálogo de productos</h2><p>Selecciona los chocolates que desea llevar el cliente.</p></div><span class="product-count">{{ productos|length }} productos</span></div>
+    <div class="catalog-tools"><div class="search-box"><span>⌕</span><input id="productSearch" type="search" placeholder="Buscar por nombre o código..."></div><select id="categoryFilter"><option value="">Todas las categorías</option>{% for producto in productos %}{% ifchanged producto.categoria.nombre %}<option value="{{ producto.categoria.nombre|lower }}">{{ producto.categoria.nombre }}</option>{% endifchanged %}{% endfor %}</select></div>
+    <div class="product-grid" id="productGrid">
+      {% for producto in productos %}
+      <article class="product-card" data-name="{{ producto.nombre|lower }}" data-code="{{ producto.codigo|lower }}" data-category="{{ producto.categoria.nombre|lower }}">
+        <div class="product-art"><span class="product-symbol">🍫</span><span class="product-category">{{ producto.categoria.nombre }}</span></div>
+        <div class="product-info"><small>{{ producto.codigo }}</small><h3>{{ producto.nombre }}</h3><div class="product-bottom"><strong>S/ {{ producto.precio_venta|floatformat:2 }}</strong><span class="stock {% if producto.stock_disponible|default:0 <= 0 %}out{% endif %}">Stock: {{ producto.stock_disponible|default:0|floatformat:0 }}</span></div></div>
+        <button type="button" class="add-product" data-id="{{ producto.id }}" data-name="{{ producto.nombre|escape }}" data-price="{{ producto.precio_venta }}" data-stock="{{ producto.stock_disponible|default:0 }}" {% if producto.stock_disponible|default:0 <= 0 %}disabled{% endif %}>+ Agregar</button>
+      </article>
+      {% empty %}<div class="empty-catalog">Aún no hay productos activos. Registra productos e inventario para comenzar.</div>{% endfor %}
+    </div>
+  </section>
+  <aside class="cart-panel">
+    <div class="cart-heading"><div><h2>Venta actual</h2><p>Detalle del pedido</p></div><span class="cart-bag">▱</span></div>
+    <div class="customer-field"><label for="cliente">Cliente</label><select id="cliente" form="saleForm" name="cliente"><option value="">Cliente general</option>{% for cliente in clientes %}<option value="{{ cliente.id }}">{{ cliente.nombres }}{% if cliente.numero_documento %} · {{ cliente.numero_documento }}{% endif %}</option>{% endfor %}</select></div>
+    <div class="cart-items" id="cartItems"><div class="cart-empty"><span>🛍</span><b>Tu carrito está vacío</b><small>Agrega productos del catálogo para comenzar.</small></div></div>
+    <div class="cart-summary"><div><span>Productos</span><b id="cartCount">0</b></div><div><span>Subtotal</span><b id="cartSubtotal">S/ 0.00</b></div><div class="total-row"><span>Total a pagar</span><strong id="cartTotal">S/ 0.00</strong></div></div>
+    <form method="post" id="saleForm" class="payment-form">{% csrf_token %}<input type="hidden" name="accion" value="registrar_venta"><input type="hidden" name="carrito" id="cartPayload"><label for="metodo_pago">Método de pago</label><select name="metodo_pago" id="metodo_pago" required>{% for metodo in metodos_pago %}<option value="{{ metodo.id }}">{{ metodo.nombre }}</option>{% endfor %}</select><label for="monto_pagado">Monto recibido (S/)</label><input type="number" id="monto_pagado" name="monto_pagado" min="0.01" step="0.01" value="0.00" required><label for="referencia_pago">Referencia <small>(opcional)</small></label><input type="text" name="referencia_pago" id="referencia_pago" placeholder="N.º de operación"><button class="checkout-button" id="checkoutButton" type="submit" disabled>Registrar venta <span>→</span></button><small class="secure-note">La venta descontará el stock automáticamente.</small></form>
+  </aside>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/pos.js' %}"></script>{% endblock %}

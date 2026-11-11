@@ -1,0 +1,4 @@
+{% extends "base.html" %}
+{% block title %}Confirmar eliminación | ChocoGest{% endblock %}
+{% block page_heading %}Eliminar registro{% endblock %}
+{% block content %}<section class="panel form-panel"><h1>¿Deseas eliminar este registro?</h1><p>Vas a eliminar: <b>{{ objeto }}</b>. Si tiene movimientos relacionados, el sistema puede impedirlo para proteger el historial.</p><form method="post">{% csrf_token %}<button class="btn-danger" type="submit">Confirmar eliminación</button> <a class="btn-secondary" href="javascript:history.back()">Cancelar</a></form></section>{% endblock %}
