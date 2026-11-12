@@ -49,15 +49,19 @@ TEMPLATES = [{
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+NOMBRE_BD = os.getenv("DB_NAME", "chocogest_db")
+NOMBRE_BD_PRUEBAS = os.getenv("DB_TEST_NAME", f"test_{NOMBRE_BD}")
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DB_NAME", "chocogest_db"),
+        "NAME": NOMBRE_BD,
         "USER": os.getenv("DB_USER", "root"),
         "PASSWORD": os.getenv("DB_PASSWORD", ""),
         "HOST": os.getenv("DB_HOST", "127.0.0.1"),
         "PORT": os.getenv("DB_PORT", "3306"),
         "OPTIONS": {"charset": "utf8mb4"},
+        "TEST": {"NAME": NOMBRE_BD_PRUEBAS},
     }
 }
 

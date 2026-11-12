@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 from apps.productos.models import Categoria, Producto
-from apps.inventario.models import Almacen, Inventario, Lote
+from apps.inventario.models import Almacen, Inventario, Lote, MovimientoInventario
 from apps.proveedores.models import Proveedor
 from apps.compras.models import Compra, DetalleCompra
 from apps.ventas.models import Venta, PagoVenta
@@ -240,6 +240,58 @@ class VentasBaseTest(TestCase):
                 lineas=lineas,
                 numero_venta="V-TEST-002",
             )
+
+    def test_fefo_descuenta_primero_el_lote_con_vencimiento_mas_cercano(self):
+        lote_mas_proximo = Lote.objects.create(
+            detalle_compra=self.detalle_compra, producto=self.producto,
+            almacen=self.almacen_a, codigo_lote="LOTE-A-FEFO",
+            fecha_vencimiento=timezone.localdate() + timedelta(days=10),
+            cantidad_recibida=Decimal("2.000"), cantidad_disponible=Decimal("2.000"),
+        )
+        Inventario.objects.filter(producto=self.producto, almacen=self.almacen_a).update(
+            stock_actual=Decimal("5.000"),
+        )
+        venta = registrar_venta(
+            usuario=self.usuario, almacen_id=self.almacen_a.pk,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("4.000"), "precio_unitario": Decimal("5.00")}],
+        )
+        lotes_venta = list(venta.detalles.order_by("pk").values_list("lote_id", "cantidad"))
+        self.assertEqual(lotes_venta, [
+            (lote_mas_proximo.pk, Decimal("2.000")),
+            (self.lote_a.pk, Decimal("2.000")),
+        ])
+
+    def test_venta_no_usa_un_lote_vencido(self):
+        self.lote_a.fecha_vencimiento = timezone.localdate() - timedelta(days=1)
+        self.lote_a.save(update_fields=["fecha_vencimiento"])
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                usuario=self.usuario, almacen_id=self.almacen_a.pk,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"), "precio_unitario": Decimal("5.00")}],
+            )
+        self.assertFalse(Venta.objects.exists())
+
+    def test_error_en_segunda_linea_revierte_toda_la_venta(self):
+        segundo_producto = Producto.objects.create(
+            categoria=self.categoria, codigo="TRUF-02", nombre="Trufa sin existencias",
+            precio_compra_referencial=Decimal("2.00"), precio_venta=Decimal("5.00"),
+        )
+        stock_antes = Inventario.objects.get(producto=self.producto, almacen=self.almacen_a).stock_actual
+        lote_antes = Lote.objects.get(pk=self.lote_a.pk).cantidad_disponible
+        movimientos_antes = MovimientoCaja.objects.count()
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                usuario=self.usuario, almacen_id=self.almacen_a.pk,
+                lineas=[
+                    {"producto_id": self.producto.pk, "cantidad": Decimal("1.000"), "precio_unitario": Decimal("5.00")},
+                    {"producto_id": segundo_producto.pk, "cantidad": Decimal("1.000"), "precio_unitario": Decimal("5.00")},
+                ],
+            )
+        self.assertFalse(Venta.objects.exists())
+        self.assertEqual(Inventario.objects.get(producto=self.producto, almacen=self.almacen_a).stock_actual, stock_antes)
+        self.assertEqual(Lote.objects.get(pk=self.lote_a.pk).cantidad_disponible, lote_antes)
+        self.assertEqual(MovimientoCaja.objects.count(), movimientos_antes)
+        self.assertFalse(MovimientoInventario.objects.filter(tipo_movimiento="SALIDA").exists())
 
     def test_pago_venta_monto_check_constraint(self):
         """Verifica que PagoVenta impida montos negativos mediante CheckConstraint."""

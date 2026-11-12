@@ -1,14 +1,22 @@
 from decimal import Decimal
+from django.contrib import admin
+from django.test import RequestFactory
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.db import models
 from django.db.models import ProtectedError
+from django.utils import timezone
 from apps.usuarios.models import Rol, Usuario
 from apps.productos.models import Categoria, Marca, Producto
-from apps.inventario.models import Almacen, Lote
+from apps.inventario.models import Almacen, Inventario, Lote
 from apps.proveedores.models import Proveedor
-from apps.compras.models import Compra, DetalleCompra
+from apps.compras.models import Compra, DetalleCompra, PagoCompra
 from apps.configuracion.models import MetodoPago, Configuracion
+from apps.ventas.models import Venta, DetalleVenta, PagoVenta
+from apps.inventario.models import MovimientoInventario
+from apps.caja.models import Caja, MovimientoCaja
+from apps.devoluciones.models import Devolucion, DetalleDevolucion
+from apps.finanzas.models import Gasto
 
 class CoreInfraestructuraTest(TestCase):
     """Pruebas de la infraestructura reutilizable de vistas, mixins y plantillas (Fase 1)."""
@@ -91,7 +99,7 @@ class CoreInfraestructuraTest(TestCase):
             usuario=self.admin,
             numero_compra="COM-DEL-01",
             tipo_documento="FACTURA",
-            fecha_compra="2026-11-11 10:00:00",
+            fecha_compra=timezone.now(),
         )
         detalle_compra = DetalleCompra.objects.create(
             compra=compra,
@@ -219,3 +227,20 @@ class CoreInfraestructuraTest(TestCase):
         self.assertContains(resp_admin, reverse("configuracion:inicio"))
         self.assertContains(resp_admin, reverse("reportes:inicio"))
         self.assertContains(resp_admin, reverse("productos:listado"))
+
+    def test_admin_transaccional_es_solo_lectura(self):
+        request = RequestFactory().get("/admin/")
+        request.user = self.admin
+        transaccionales = (
+            Venta, DetalleVenta, PagoVenta, Compra, DetalleCompra, PagoCompra,
+            Inventario, Lote, MovimientoInventario, Caja, MovimientoCaja,
+            Devolucion, DetalleDevolucion, Gasto,
+        )
+        for modelo in transaccionales:
+            with self.subTest(modelo=modelo.__name__):
+                model_admin = admin.site._registry[modelo]
+                self.assertFalse(model_admin.has_add_permission(request))
+                self.assertFalse(model_admin.has_change_permission(request))
+                self.assertFalse(model_admin.has_delete_permission(request))
+                campos_lectura = set(model_admin.get_readonly_fields(request))
+                self.assertTrue({campo.name for campo in modelo._meta.concrete_fields}.issubset(campos_lectura))

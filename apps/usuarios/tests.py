@@ -63,6 +63,46 @@ class UsuarioLoginSeguridadTest(TestCase):
         for nombre_url in ["caja:inicio", "compras:listado", "inventario:ajustar", "inventario:transferir", "finanzas:inicio"]:
             self.assertRedirects(self.client.get(reverse(nombre_url)), reverse("dashboard"))
 
+    def test_matriz_de_acceso_de_los_cuatro_roles(self):
+        roles = {
+            "Administrador": self.rol,
+            "Vendedor": Rol.objects.create(nombre="Vendedor"),
+            "Cajero": Rol.objects.create(nombre="Cajero"),
+            "Almacenero": Rol.objects.create(nombre="Almacenero"),
+        }
+        usuarios = {
+            nombre: Usuario.objects.create_user(
+                username=f"matriz_{nombre.lower()}", password="secretpassword123", rol=rol,
+            )
+            for nombre, rol in roles.items()
+        }
+        accesos = {
+            "clientes:listado": {"Administrador", "Vendedor"},
+            "productos:listado": {"Administrador", "Vendedor", "Almacenero"},
+            "proveedores:listado": {"Administrador", "Almacenero"},
+            "compras:listado": {"Administrador", "Almacenero"},
+            "inventario:stock": {"Administrador", "Vendedor", "Almacenero"},
+            "inventario:ajustar": {"Administrador", "Almacenero"},
+            "ventas:inicio": {"Administrador", "Vendedor", "Cajero"},
+            "ventas:historial": {"Administrador", "Vendedor", "Cajero"},
+            "devoluciones:listado": {"Administrador", "Vendedor"},
+            "caja:inicio": {"Administrador", "Cajero"},
+            "finanzas:inicio": {"Administrador"},
+            "reportes:inicio": {"Administrador"},
+            "configuracion:inicio": {"Administrador"},
+            "usuarios:listado": {"Administrador"},
+        }
+        for rol, usuario in usuarios.items():
+            self.client.force_login(usuario)
+            for nombre_url, roles_permitidos in accesos.items():
+                with self.subTest(rol=rol, url=nombre_url):
+                    respuesta = self.client.get(reverse(nombre_url))
+                    if rol in roles_permitidos:
+                        self.assertEqual(respuesta.status_code, 200)
+                    else:
+                        self.assertEqual(respuesta.status_code, 302)
+                        self.assertEqual(respuesta.url, reverse("dashboard"))
+
     def test_comando_de_datos_iniciales_es_idempotente(self):
         call_command("cargar_datos_iniciales", verbosity=0)
         conteo_productos = Producto.objects.count()
