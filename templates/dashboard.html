@@ -6,7 +6,8 @@
 <div class="stats-grid">
   <article class="stat-card"><span class="stat-icon">▣</span><small>Productos activos</small><strong>{{ productos_count }}</strong><span class="stat-note">En catálogo</span></article>
   <article class="stat-card"><span class="stat-icon">♙</span><small>Clientes registrados</small><strong>{{ clientes_count }}</strong><span class="stat-note">Base de clientes</span></article>
-  <article class="stat-card accent"><span class="stat-icon">S/</span><small>Ventas de hoy</small><strong>S/ {{ ventas_hoy|floatformat:2 }}</strong><span class="stat-note">Ventas confirmadas y parciales</span></article>
+  <article class="stat-card accent"><span class="stat-icon">S/</span><small>Ventas de hoy</small><strong>S/ {{ ventas_hoy|floatformat:2 }}</strong><span class="stat-note">Ventas registradas no anuladas</span></article>
+  <article class="stat-card"><span class="stat-icon">↗</span><small>Ventas del mes</small><strong>S/ {{ ventas_mes|floatformat:2 }}</strong><span class="stat-note">{{ ventas_mes_cantidad }} operaciones</span></article>
   <article class="stat-card"><span class="stat-icon">⇩</span><small>Compras pendientes</small><strong>{{ compras_pendientes }}</strong><span class="stat-note">Por recibir</span></article>
 </div>
 <div class="dashboard-grid">
@@ -16,6 +17,11 @@
   </tbody></table></div></section>
   <section class="panel alerts"><div class="panel-heading"><div><span class="eyebrow">INVENTARIO</span><h2>Alertas</h2></div></div><div class="alert-item"><span class="alert-symbol">!</span><div><b>Stock bajo o agotado</b><small>{{ stock_bajo }} productos requieren revisión</small></div></div><div class="alert-item"><span class="alert-symbol">◷</span><div><b>Próximos vencimientos</b><small>{{ lotes_por_vencer }} lotes vencen en los próximos 30 días</small></div></div><a class="text-link" href="{% url 'inventario:inicio' %}">Revisar inventario →</a></section>
 </div>
+<div class="dashboard-grid dashboard-analytics">
+  <section class="panel"><div class="panel-heading"><div><span class="eyebrow">ÚLTIMOS SIETE DÍAS</span><h2>Ventas diarias</h2></div></div><figure class="sales-chart"><svg viewBox="0 0 480 205" role="img" aria-label="Gráfico de ventas de los últimos siete días"><line x1="18" y1="150" x2="462" y2="150" class="chart-axis"/>{% for dia in ventas_ultimos_siete %}<g><title>{{ dia.fecha|date:"d/m/Y" }} · S/ {{ dia.total|floatformat:2 }}</title><rect x="{{ dia.x_svg }}" y="{{ dia.y_svg }}" width="34" height="{{ dia.alto_svg }}" rx="6" class="chart-bar"/><text x="{{ dia.etiqueta_x }}" y="176" text-anchor="middle">{{ dia.etiqueta }}</text></g>{% endfor %}</svg><figcaption>Importe de ventas registradas por día · soles</figcaption></figure></section>
+  <section class="panel"><div class="panel-heading"><div><span class="eyebrow">MES ACTUAL</span><h2>Top 5 productos</h2></div></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Unidades</th><th>Importe</th></tr></thead><tbody>{% for producto in top_productos %}<tr><td><b>{{ producto.producto__nombre }}</b><small class="block-note">{{ producto.producto__codigo }}</small></td><td>{{ producto.cantidad }}</td><td>S/ {{ producto.importe|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="3" class="empty">Sin ventas este mes.</td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+<section class="panel"><div class="panel-heading"><div><span class="eyebrow">VENCIMIENTOS</span><h2>Lotes por vencer</h2></div><a href="{% url 'inventario:lotes' %}">Ver lotes →</a></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Lote</th><th>Almacén</th><th>Vence</th><th>Disponible</th></tr></thead><tbody>{% for lote in lotes_alerta %}<tr><td>{{ lote.producto.nombre }}</td><td>{{ lote.codigo_lote }}</td><td>{{ lote.almacen.nombre }}</td><td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td><td>{{ lote.cantidad_disponible }}</td></tr>{% empty %}<tr><td colspan="5" class="empty">No hay lotes disponibles próximos a vencer.</td></tr>{% endfor %}</tbody></table></div></section>
 <div class="quick-actions">
   {% if user.es_administrador or user.es_almacenero %}
     <a href="{% url 'productos:crear' %}">＋ Nuevo producto</a>

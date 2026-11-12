@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="welcome-row"><div><span class="eyebrow">ANÁLISIS DEL NEGOCIO</span><h1>Reportes</h1><p>Consulta indicadores por periodo y descarga los datos para compartirlos.</p></div></div>
+<div class="stats-grid">{% for clave, titulo in reportes.items %}<a class="stat-card report-card" href="{% url 'reportes:reporte' clave %}"><span class="stat-icon">↗</span><small>Reporte</small><strong>{{ titulo }}</strong><span class="stat-note">Ver datos y exportar →</span></a>{% endfor %}</div>
+{% endblock %}
