@@ -7,14 +7,14 @@
 <div class="welcome-row">
   <div>
     <span class="eyebrow">ELIMINAR REGISTRO</span>
-    <h1>¿Deseas eliminar este registro?</h1>
+    <h1>{% if accion_texto %}¿Deseas {{ accion_texto|lower }}?{% else %}¿Deseas eliminar este registro?{% endif %}</h1>
     <p>Esta acción removerá el registro del sistema o lo desactivará si tiene relaciones históricas.</p>
   </div>
 </div>
 
 <section class="panel form-panel">
   <p style="font-size: 15px; margin-bottom: 20px;">
-    Vas a eliminar: <b style="color: var(--cocoa);">{{ objeto }}</b>.
+    {% if accion_texto %}Vas a confirmar esta acción para{% else %}Vas a eliminar{% endif %}: <b style="color: var(--cocoa);">{{ objeto }}</b>.
   </p>
   <p class="field-help" style="margin-bottom: 25px;">
     Si el registro cuenta con movimientos o transacciones vinculadas (ventas, compras, pagos o inventario), el sistema protegerá la integridad de los datos desactivándolo en lugar de borrarlo físicamente.
@@ -23,7 +23,7 @@
   <form method="post">
     {% csrf_token %}
     <div class="form-actions" style="justify-content: flex-start;">
-      <button class="btn-danger" type="submit">Confirmar eliminación</button>
+      <button class="btn-danger" type="submit">{{ accion_texto|default:"Confirmar eliminación" }}</button>
       {% if url_cancelar %}
         <a class="btn-secondary" href="{{ url_cancelar }}">Cancelar y volver</a>
       {% else %}

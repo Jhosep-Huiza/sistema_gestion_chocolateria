@@ -38,7 +38,7 @@
       {% endif %}
 
       {% if user.es_administrador or user.es_almacenero %}
-        <a href="{% url 'compras:inicio' %}">⇩ <span>Compras</span></a>
+        <a href="{% url 'compras:listado' %}">⇩ <span>Compras</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_almacenero %}

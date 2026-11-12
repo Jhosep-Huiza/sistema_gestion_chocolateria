@@ -25,6 +25,7 @@ class BaseListView(LoginRequiredMixin, PermisoRolMixin, ListView):
     url_editar = None
     url_eliminar = None
     url_estado = None
+    url_ver = None
     placeholder_buscar = "Buscar por nombre, código o descripción..."
 
     def get_queryset(self):
@@ -49,6 +50,7 @@ class BaseListView(LoginRequiredMixin, PermisoRolMixin, ListView):
         context["url_editar"] = self.url_editar
         context["url_eliminar"] = self.url_eliminar
         context["url_estado"] = self.url_estado
+        context["url_ver"] = self.url_ver
         context["placeholder_buscar"] = self.placeholder_buscar
         def tiene_permiso(roles):
             if self.request.user.is_superuser:

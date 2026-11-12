@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ titulo }} | ChocoGest{% endblock %}
+{% block page_heading %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="welcome-row"><div><span class="eyebrow">INVENTARIO · RECEPCIÓN</span><h1>{{ titulo }}</h1><p>{{ subtitulo }}</p></div></div>
+<section class="panel form-panel"><p>Compra {{ compra.numero_compra }} · {{ compra.proveedor }}</p>
+  <form method="post" novalidate>{% csrf_token %}
+    <div class="form-group"><label for="almacen">Almacén de destino *</label><select class="form-select" id="almacen" name="almacen" required><option value="">Selecciona un almacén</option>{% for almacen in almacenes %}<option value="{{ almacen.pk }}" {% if almacen_seleccionado == almacen.pk|stringformat:"s" %}selected{% endif %}>{{ almacen.nombre }}</option>{% endfor %}</select></div>
+    {{ lotes.management_form }}
+    {% if lotes.non_form_errors %}<div class="message error">{% for error in lotes.non_form_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+    <div id="lotes-compra">{% for lote in lotes %}<div class="purchase-line">{% for field in lote.visible_fields %}<div class="form-group {% if field.errors %}has-error{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}<button class="link-button quitar-lote" type="button">Quitar</button></div>{% endfor %}</div>
+    <template id="lote-vacio">{% with lote=lotes.empty_form %}<div class="purchase-line">{% for field in lote.visible_fields %}<div class="form-group"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>{% endfor %}<button class="link-button quitar-lote" type="button">Quitar</button></div>{% endwith %}</template>
+    <div class="form-actions"><button class="btn-secondary" type="button" id="agregar-lote">＋ Agregar lote</button><a class="btn-secondary" href="{{ url_cancelar }}">Cancelar</a><button class="btn-primary" type="submit">Confirmar recepción</button></div>
+  </form>
+</section>
+{% endblock %}
+{% block extra_js %}<script>
+(() => {const lista=document.getElementById("lotes-compra"), total=document.getElementById("id_lotes-TOTAL_FORMS"), plantilla=document.getElementById("lote-vacio");
+document.getElementById("agregar-lote").addEventListener("click",()=>{const indice=Number(total.value);lista.insertAdjacentHTML("beforeend",plantilla.innerHTML.replaceAll("__prefix__",indice));total.value=indice+1;});
+lista.addEventListener("click",e=>{if(e.target.classList.contains("quitar-lote")&&lista.children.length>1)e.target.closest(".purchase-line").remove();});})();
+</script>{% endblock %}

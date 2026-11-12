@@ -59,7 +59,7 @@ class UsuarioLoginSeguridadTest(TestCase):
         self.client.force_login(vendedor)
         for nombre_url in ["ventas:inicio", "clientes:listado", "productos:listado", "devoluciones:inicio"]:
             self.assertEqual(self.client.get(reverse(nombre_url)).status_code, 200)
-        for nombre_url in ["caja:inicio", "compras:inicio", "inventario:inicio", "finanzas:inicio"]:
+        for nombre_url in ["caja:inicio", "compras:listado", "inventario:inicio", "finanzas:inicio"]:
             self.assertRedirects(self.client.get(reverse(nombre_url)), reverse("dashboard"))
 
     def test_comando_de_datos_iniciales_es_idempotente(self):

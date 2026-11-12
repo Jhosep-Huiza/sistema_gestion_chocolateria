@@ -19,9 +19,15 @@
 <section class="panel">
   <form class="search-row" method="get">
     <input name="q" value="{{ q }}" placeholder="{{ placeholder_buscar|default:'Buscar por nombre, código o descripción...' }}">
-    <button class="btn-secondary" type="submit">Buscar</button>
-    {% if q %}
-      <button type="button" class="btn-secondary" onclick="this.form.q.value=''; this.form.submit();" title="Limpiar búsqueda">✕ Limpiar</button>
+    {% if proveedores %}
+      <select class="form-select" name="estado"><option value="">Todos los estados</option>{% for clave, etiqueta in estados_compra %}<option value="{{ clave }}" {% if estado_filtro == clave %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select>
+      <select class="form-select" name="proveedor"><option value="">Todos los proveedores</option>{% for proveedor in proveedores %}<option value="{{ proveedor.pk }}" {% if proveedor_filtro == proveedor.pk|stringformat:"s" %}selected{% endif %}>{{ proveedor.razon_social }}</option>{% endfor %}</select>
+      <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
+      <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+    {% endif %}
+    <button class="btn-secondary" type="submit">{% if proveedores %}Filtrar{% else %}Buscar{% endif %}</button>
+    {% if q or estado_filtro or proveedor_filtro or desde or hasta %}
+      <button type="button" class="btn-secondary" onclick="this.form.querySelectorAll('input').forEach(campo => campo.value=''); this.form.querySelectorAll('select').forEach(campo => campo.selectedIndex=0); this.form.submit();" title="Limpiar búsqueda y filtros">✕ Limpiar</button>
     {% endif %}
   </form>
 
@@ -39,7 +45,7 @@
             <th>Registro</th>
             <th>Estado</th>
           {% endif %}
-          {% if url_editar or url_eliminar or url_estado %}
+          {% if url_ver or url_editar or url_eliminar or url_estado %}
             <th class="text-right">Acciones</th>
           {% endif %}
         </tr>
@@ -58,8 +64,11 @@
               <td><b>{{ r }}</b></td>
               <td>{% render_celda r "estado" %}</td>
             {% endif %}
-            {% if url_editar or url_eliminar or url_estado %}
+            {% if url_ver or url_editar or url_eliminar or url_estado %}
               <td class="actions">
+                {% if url_ver %}
+                  <a href="{% url url_ver r.pk %}" title="Ver detalle">Ver</a>
+                {% endif %}
                 {% if url_editar and permiso_editar %}
                   <a href="{% url url_editar r.pk %}" title="Editar registro">Editar</a>
                 {% endif %}
