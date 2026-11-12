@@ -41,8 +41,10 @@
         <a href="{% url 'compras:listado' %}">⇩ <span>Compras</span></a>
       {% endif %}
 
-      {% if user.es_administrador or user.es_almacenero %}
+      {% if user.es_administrador or user.es_almacenero or user.es_vendedor %}
         <a href="{% url 'inventario:inicio' %}">▤ <span>Inventario</span></a>
+        <a href="{% url 'inventario:lotes' %}">▧ <span>Lotes</span></a>
+        <a href="{% url 'inventario:movimientos' %}">↕ <span>Kardex</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_vendedor or user.es_cajero %}

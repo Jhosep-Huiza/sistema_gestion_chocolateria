@@ -14,6 +14,8 @@
   {% if url_crear and permiso_crear %}
     <a class="btn-primary compact" href="{% url url_crear %}">＋ Nuevo registro</a>
   {% endif %}
+  {% if url_ajustar and permiso_crear %}<a class="btn-primary compact" href="{% url url_ajustar %}">± Ajustar stock</a>{% endif %}
+  {% if url_transferir and permiso_crear %}<a class="btn-secondary" href="{% url url_transferir %}">⇄ Transferir</a>{% endif %}
 </div>
 
 <section class="panel">
@@ -24,9 +26,19 @@
       <select class="form-select" name="proveedor"><option value="">Todos los proveedores</option>{% for proveedor in proveedores %}<option value="{{ proveedor.pk }}" {% if proveedor_filtro == proveedor.pk|stringformat:"s" %}selected{% endif %}>{{ proveedor.razon_social }}</option>{% endfor %}</select>
       <label>Desde <input type="date" name="desde" value="{{ desde }}"></label>
       <label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+    {% elif filtro_stock %}
+      <select class="form-select" name="almacen"><option value="">Todos los almacenes</option>{% for almacen in almacenes %}<option value="{{ almacen.pk }}" {% if almacen_filtro == almacen.pk|stringformat:"s" %}selected{% endif %}>{{ almacen.nombre }}</option>{% endfor %}</select>
+      <select class="form-select" name="alerta"><option value="">Todo el stock</option><option value="bajo" {% if alerta_filtro == "bajo" %}selected{% endif %}>Solo bajo mínimo</option></select>
+    {% elif filtro_lotes %}
+      <select class="form-select" name="vigencia"><option value="">Todas las vigencias</option><option value="vigente" {% if vigencia_filtro == "vigente" %}selected{% endif %}>Vigente</option><option value="por_vencer" {% if vigencia_filtro == "por_vencer" %}selected{% endif %}>Por vencer en 30 días</option><option value="vencido" {% if vigencia_filtro == "vencido" %}selected{% endif %}>Vencido</option><option value="cuarentena" {% if vigencia_filtro == "cuarentena" %}selected{% endif %}>Cuarentena</option></select>
+    {% elif filtro_movimientos %}
+      <select class="form-select" name="producto"><option value="">Todos los productos</option>{% for producto in productos %}<option value="{{ producto.pk }}" {% if producto_filtro == producto.pk|stringformat:"s" %}selected{% endif %}>{{ producto.nombre }}</option>{% endfor %}</select>
+      <select class="form-select" name="almacen"><option value="">Todos los almacenes</option>{% for almacen in almacenes %}<option value="{{ almacen.pk }}" {% if almacen_filtro == almacen.pk|stringformat:"s" %}selected{% endif %}>{{ almacen.nombre }}</option>{% endfor %}</select>
+      <select class="form-select" name="tipo"><option value="">Todos los movimientos</option>{% for clave, etiqueta in tipos_movimiento %}<option value="{{ clave }}" {% if tipo_filtro == clave %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select>
+      <label>Desde <input type="date" name="desde" value="{{ desde }}"></label><label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
     {% endif %}
     <button class="btn-secondary" type="submit">{% if proveedores %}Filtrar{% else %}Buscar{% endif %}</button>
-    {% if q or estado_filtro or proveedor_filtro or desde or hasta %}
+    {% if q or estado_filtro or proveedor_filtro or desde or hasta or almacen_filtro or alerta_filtro or vigencia_filtro or producto_filtro or tipo_filtro %}
       <button type="button" class="btn-secondary" onclick="this.form.querySelectorAll('input').forEach(campo => campo.value=''); this.form.querySelectorAll('select').forEach(campo => campo.selectedIndex=0); this.form.submit();" title="Limpiar búsqueda y filtros">✕ Limpiar</button>
     {% endif %}
   </form>

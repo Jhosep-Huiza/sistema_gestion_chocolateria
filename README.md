@@ -60,8 +60,8 @@ Abre http://127.0.0.1:8000/
 ## Consideraciones importantes
 1. El modelo `Usuario` personalizado está configurado desde el inicio. No cambies `AUTH_USER_MODEL` después de migrar.
 2. Las tablas se generan mediante las migraciones de Django. El ZIP incluye los paquetes `migrations`, y debes generar las migraciones en tu entorno con los comandos anteriores.
-3. Los módulos de clientes, productos y proveedores incluyen CRUD web inicial. Compras y ventas incluyen servicios transaccionales de recepción y venta con asignación FEFO. Los formularios especializados de POS, pagos, cierre de caja, devoluciones y reportes detallados todavía deben conectarse a vistas antes de usar el sistema en producción.
-4. No se debe actualizar el stock editando directamente `Inventario`. Implementa servicios transaccionales con `transaction.atomic()` y `select_for_update()` para compras, ventas, devoluciones y ajustes.
+3. Los módulos de clientes, productos y proveedores incluyen CRUD web inicial. Compras, ventas e inventario usan servicios transaccionales para recepción, salidas, ajustes, transferencias y anulaciones.
+4. No se debe actualizar el stock editando directamente `Inventario`. Todo cambio de stock debe pasar por servicios con `transaction.atomic()`, `select_for_update()` y movimientos de inventario.
 5. Configura `DEBUG=False`, `SECRET_KEY` segura, `ALLOWED_HOSTS`, HTTPS y copias de seguridad antes de publicar.
 6. Los importes se guardan como `DecimalField`; no uses `float` para cálculos monetarios.
 7. Las referencias comerciales se protegen con `PROTECT` para preservar el historial.
@@ -70,5 +70,7 @@ Abre http://127.0.0.1:8000/
 ## Servicios transaccionales disponibles
 - `apps.compras.services.recibir_compra(...)`: recibe una compra pendiente, valida los lotes y actualiza inventario y movimientos dentro de una transacción.
 - `apps.ventas.services.registrar_venta(...)`: registra una venta, valida existencias y distribuye la salida por lotes FEFO dentro de una transacción. Los pagos se registran con `PagoVenta`.
+- `apps.inventario.services.ajustar_inventario(...)`, `transferir_stock(...)` y `cambiar_estado_lote(...)`: registran ajustes, transferencias entre almacenes y cambios de cuarentena.
+- `python manage.py marcar_lotes_vencidos`: retira del stock y registra movimientos de los lotes cuya fecha ya pasó. Programa este comando una vez al día con el Programador de tareas de Windows o el cron del servidor.
 
 Estos servicios son una base de dominio y deben invocarse desde vistas/formularios validados. Prueba los casos de concurrencia y reglas tributarias antes de producción.

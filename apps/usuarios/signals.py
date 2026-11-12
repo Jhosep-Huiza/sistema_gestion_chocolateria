@@ -46,6 +46,9 @@ def auditar_cierre_caja(sender, instance, created, **kwargs):
 def auditar_ajuste_stock(sender, instance, created, **kwargs):
     if not created or not instance.tipo_movimiento.startswith("AJUSTE_"):
         return
+    # ajustar_inventario registra el evento con la IP recibida por el servicio.
+    if instance.referencia_tipo == "AJUSTE":
+        return
     _, ip = contexto_auditoria()
     registrar_auditoria(usuario=instance.usuario, accion="AJUSTE_STOCK",
                         tabla_afectada="inventario", registro_id=instance.pk,

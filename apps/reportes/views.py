@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from apps.core.mixins import requiere_roles
-from django.db.models import Sum
+from django.db.models import Sum, F
 from django.shortcuts import render
 from apps.productos.models import Producto
 from apps.clientes.models import Cliente
@@ -18,7 +18,7 @@ def dashboard(request):
         "clientes_count": Cliente.objects.filter(estado=True).count(),
         "ventas_hoy": ventas_hoy,
         "compras_pendientes": Compra.objects.filter(estado="PENDIENTE").count(),
-        "stock_bajo": Inventario.objects.filter(stock_actual__lte=0).count(),
+        "stock_bajo": Inventario.objects.filter(stock_actual__lte=F("producto__stock_minimo")).count(),
         "lotes_por_vencer": Lote.objects.filter(fecha_vencimiento__gte=hoy, fecha_vencimiento__lte=hoy + timezone.timedelta(days=30), cantidad_disponible__gt=0).count(),
         "ventas_recientes": Venta.objects.select_related("cliente","usuario").order_by("-fecha_venta")[:7],
     }

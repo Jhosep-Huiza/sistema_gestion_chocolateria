@@ -5,6 +5,13 @@ app_name = "inventario"
 
 urlpatterns = [
     path("", views.inicio, name="inicio"),
+    path("stock/", views.StockListView.as_view(), name="stock"),
+    path("lotes/", views.LoteListView.as_view(), name="lotes"),
+    path("lotes/<int:pk>/estado/", views.actualizar_estado_lote, name="lote_estado"),
+    path("lotes/<int:pk>/", views.lote_detalle, name="lote_detalle"),
+    path("kardex/", views.MovimientoListView.as_view(), name="movimientos"),
+    path("ajustes/nuevo/", views.nuevo_ajuste, name="ajustar"),
+    path("transferencias/nueva/", views.nueva_transferencia, name="transferir"),
 
     # Almacenes
     path("almacenes/", views.AlmacenListView.as_view(), name="almacen_listado"),

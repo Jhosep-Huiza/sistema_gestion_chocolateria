@@ -28,3 +28,9 @@ class Inventario(models.Model):
 
     def __str__(self):
         return f"{self.producto} / {self.almacen}"
+
+    @property
+    def estado_stock(self):
+        if self.stock_actual <= self.producto.stock_minimo:
+            return "STOCK BAJO"
+        return "NORMAL"
