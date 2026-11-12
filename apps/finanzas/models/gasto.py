@@ -8,6 +8,7 @@ class Gasto(models.Model):
     categoria = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
     monto = models.DecimalField(max_digits=12, decimal_places=2)
+    es_efectivo = models.BooleanField(default=False)
     fecha_gasto = models.DateTimeField()
     comprobante = models.FileField(upload_to="gastos/", blank=True, null=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default="REGISTRADO")
