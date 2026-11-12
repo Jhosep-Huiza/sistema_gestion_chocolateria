@@ -1,7 +1,7 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
 
@@ -26,10 +26,14 @@ def abrir_caja(*, usuario, monto_inicial):
     monto_inicial = _importe(monto_inicial)
     if Caja.objects.select_for_update().filter(usuario=usuario, estado="ABIERTA").exists():
         raise ValidationError("Ya tienes una caja abierta.")
-    return Caja.objects.create(
-        usuario=usuario, fecha_apertura=timezone.now(), monto_inicial=monto_inicial,
-        estado="ABIERTA",
-    )
+    try:
+        with transaction.atomic():
+            return Caja.objects.create(
+                usuario=usuario, fecha_apertura=timezone.now(), monto_inicial=monto_inicial,
+                estado="ABIERTA",
+            )
+    except IntegrityError as error:
+        raise ValidationError("Ya tienes una caja abierta.") from error
 
 
 @transaction.atomic

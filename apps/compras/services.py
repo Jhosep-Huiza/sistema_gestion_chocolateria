@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 from apps.compras.models import Compra, DetalleCompra, PagoCompra
+from apps.caja.models import Caja, MovimientoCaja
 from apps.inventario.models import Almacen, Inventario, Lote, MovimientoInventario
 from apps.configuracion.models import Configuracion, MetodoPago
 from apps.ventas.models import DetalleVenta
@@ -84,7 +85,7 @@ def crear_compra(*, proveedor_id, usuario, tipo_documento, numero_documento="",
 
 @transaction.atomic
 def registrar_pago_compra(*, compra_id, usuario, metodo_pago_id, monto,
-                          referencia="", direccion_ip=None):
+                          referencia="", caja_id=None, direccion_ip=None):
     """Registra un pago sin exceder el saldo pendiente de la compra."""
     compra = Compra.objects.select_for_update().get(pk=compra_id)
     metodo = MetodoPago.objects.get(pk=metodo_pago_id, estado=True)
@@ -95,10 +96,26 @@ def registrar_pago_compra(*, compra_id, usuario, metodo_pago_id, monto,
         raise ValidationError("No se puede pagar una compra anulada.")
     if monto <= 0 or monto > saldo:
         raise ValidationError(f"El pago debe ser mayor a cero y no superar el saldo de S/ {saldo:.2f}.")
-    return PagoCompra.objects.create(
+    caja = None
+    if metodo.nombre.strip().casefold() == "efectivo":
+        caja = Caja.objects.select_for_update().filter(pk=caja_id, estado="ABIERTA").first() if caja_id else None
+        if caja_id and caja is None:
+            raise ValidationError("La caja seleccionada está cerrada o no existe.")
+        if caja is None:
+            caja = Caja.objects.select_for_update().filter(usuario=usuario, estado="ABIERTA").first()
+        if caja is None:
+            raise ValidationError("Selecciona una caja abierta para registrar el pago en efectivo.")
+    pago = PagoCompra.objects.create(
         compra=compra, metodo_pago=metodo, usuario=usuario,
         monto=monto, fecha_pago=timezone.now(), referencia=referencia,
     )
+    if caja:
+        MovimientoCaja.objects.create(
+            caja=caja, usuario=usuario, tipo="EGRESO",
+            concepto=f"Pago en efectivo · Compra {compra.numero_compra}", monto=monto,
+            referencia_tipo="COMPRA_PAGO", referencia_id=pago.pk,
+        )
+    return pago
 
 @transaction.atomic
 def recibir_compra(*, compra_id, almacen_id, usuario, lotes_por_detalle, direccion_ip=None):
@@ -225,6 +242,24 @@ def anular_compra(*, compra_id, usuario, direccion_ip=None):
 
     compra.estado = "ANULADA"
     compra.save(update_fields=["estado"])
+    movimientos_pago = list(MovimientoCaja.objects.select_for_update().filter(
+        referencia_tipo="COMPRA_PAGO", referencia_id__in=compra.pagos.values_list("pk", flat=True),
+        tipo="EGRESO",
+    ))
+    caja_reversa = None
+    for movimiento in movimientos_pago:
+        caja_movimiento = Caja.objects.select_for_update().get(pk=movimiento.caja_id)
+        if caja_movimiento.estado == "CERRADA":
+            if caja_reversa is None:
+                caja_reversa = Caja.objects.select_for_update().filter(usuario=usuario, estado="ABIERTA").first()
+            if caja_reversa is None:
+                raise ValidationError("Abre una caja para registrar la reversa de los pagos en efectivo.")
+            caja_movimiento = caja_reversa
+        MovimientoCaja.objects.create(
+            caja=caja_movimiento, usuario=usuario, tipo="INGRESO",
+            concepto=f"Reversa de compra {compra.numero_compra}", monto=movimiento.monto,
+            referencia_tipo="ANULACION_COMPRA", referencia_id=compra.pk,
+        )
     compra.pagos.filter(estado="CONFIRMADO").update(estado="ANULADO")
     _, ip_contexto = contexto_auditoria()
     registrar_auditoria(

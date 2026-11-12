@@ -163,6 +163,7 @@ def registrar_pago(request, pk):
                 compra_id=compra.pk, usuario=request.user,
                 metodo_pago_id=form.cleaned_data["metodo_pago"].pk,
                 monto=form.cleaned_data["monto"], referencia=form.cleaned_data["referencia"],
+                caja_id=form.cleaned_data["caja"].pk if form.cleaned_data["caja"] else None,
                 direccion_ip=obtener_ip(request),
             )
         except ValidationError as error:

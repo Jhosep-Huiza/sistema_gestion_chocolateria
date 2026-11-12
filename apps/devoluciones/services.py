@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 
-from apps.caja.models import MovimientoCaja
+from apps.caja.models import Caja, MovimientoCaja
 from apps.inventario.models import Inventario, Lote, MovimientoInventario
 from apps.usuarios.services import contexto_auditoria, registrar_auditoria
 from apps.ventas.models import DetalleVenta, Venta
@@ -152,12 +152,15 @@ def aprobar_devolucion(*, devolucion_id, usuario, efectivo=False, direccion_ip=N
         )
 
     if efectivo and devolucion.tipo_reembolso == "REEMBOLSO":
-        caja = venta.caja
+        caja = None
+        if venta.caja_id:
+            caja = Caja.objects.select_for_update().filter(
+                pk=venta.caja_id, estado="ABIERTA",
+            ).first()
         if caja is None:
-            caja = getattr(devolucion.usuario, "cajas", None)
-            caja = caja.order_by("-fecha_apertura").first() if caja is not None else None
+            caja = usuario.cajas.select_for_update().filter(estado="ABIERTA").first()
         if caja is None:
-            raise ValidationError("No se encontró una caja para registrar el reembolso en efectivo.")
+            raise ValidationError("Abre una caja para registrar el reembolso en efectivo.")
         MovimientoCaja.objects.create(
             caja=caja, usuario=usuario, tipo="EGRESO",
             concepto=f"Reembolso en efectivo · Venta {venta.numero_venta}",

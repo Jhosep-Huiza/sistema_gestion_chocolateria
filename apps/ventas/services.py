@@ -306,9 +306,19 @@ def anular_venta(*, venta_id, usuario, motivo, direccion_ip=None):
     movimientos_efectivo = list(MovimientoCaja.objects.select_for_update().filter(
         referencia_tipo="VENTA", referencia_id=venta.pk, tipo="INGRESO",
     ))
+    caja_reversa = None
     for ingreso in movimientos_efectivo:
+        caja_movimiento = Caja.objects.select_for_update().get(pk=ingreso.caja_id)
+        if caja_movimiento.estado == "CERRADA":
+            if caja_reversa is None:
+                caja_reversa = Caja.objects.select_for_update().filter(
+                    usuario=usuario, estado="ABIERTA",
+                ).first()
+            if caja_reversa is None:
+                raise ValidationError("Abre una caja para registrar el reverso de los pagos en efectivo.")
+            caja_movimiento = caja_reversa
         MovimientoCaja.objects.create(
-            caja=ingreso.caja, usuario=usuario, tipo="EGRESO",
+            caja=caja_movimiento, usuario=usuario, tipo="EGRESO",
             concepto=f"Reverso de venta {venta.numero_venta}: {motivo}",
             monto=ingreso.monto, referencia_tipo="ANULACION_VENTA", referencia_id=venta.pk,
         )

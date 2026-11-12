@@ -102,7 +102,7 @@ def actualizar_gasto(*, gasto_id, usuario, categoria, descripcion, monto,
 
 
 @transaction.atomic
-def anular_gasto(*, gasto_id, usuario, motivo=""):
+def anular_gasto(*, gasto_id, usuario, motivo="", direccion_ip=None):
     gasto = Gasto.objects.select_for_update().get(pk=gasto_id)
     if gasto.estado != "REGISTRADO":
         raise ValidationError("El gasto ya está anulado.")
@@ -120,7 +120,7 @@ def anular_gasto(*, gasto_id, usuario, motivo=""):
     _, ip_contexto = contexto_auditoria()
     registrar_auditoria(
         usuario=usuario, accion="ANULACION_GASTO", tabla_afectada="gastos", registro_id=gasto.pk,
-        descripcion=f"Gasto {gasto.pk} anulado. {motivo.strip()}", direccion_ip=ip_contexto,
+        descripcion=f"Gasto {gasto.pk} anulado. {motivo.strip()}", direccion_ip=direccion_ip or ip_contexto,
     )
     return gasto
 

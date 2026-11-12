@@ -1,11 +1,13 @@
 from decimal import Decimal
-from django.test import TestCase
+from django.test import Client, TestCase
+from django.urls import reverse
 from django.utils import timezone
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 from apps.caja.models import Caja, MovimientoCaja
 from apps.usuarios.models import Rol, Usuario
+from apps.caja.services import abrir_caja, cerrar_caja, registrar_movimiento_caja
 
 class CajaBaseTest(TestCase):
     """Pruebas de Caja: restricción de una sola caja abierta por usuario y montos."""
@@ -95,3 +97,29 @@ class CajaBaseTest(TestCase):
                     concepto="Ingreso prueba",
                     monto=Decimal("-20.00"),
                 )
+
+    def test_cierre_calcula_esperado_y_bloquea_movimientos_posteriores(self):
+        caja = abrir_caja(usuario=self.usuario1, monto_inicial=Decimal("100.00"))
+        registrar_movimiento_caja(
+            caja_id=caja.pk, usuario=self.usuario1, tipo="INGRESO",
+            concepto="Fondo recibido", monto=Decimal("25.00"),
+        )
+        registrar_movimiento_caja(
+            caja_id=caja.pk, usuario=self.usuario1, tipo="EGRESO",
+            concepto="Compra urgente", monto=Decimal("10.00"),
+        )
+        cerrada = cerrar_caja(caja_id=caja.pk, usuario=self.usuario1, monto_final=Decimal("113.00"))
+        self.assertEqual(cerrada.monto_esperado, Decimal("115.00"))
+        self.assertEqual(cerrada.diferencia, Decimal("-2.00"))
+        with self.assertRaises(ValidationError):
+            registrar_movimiento_caja(
+                caja_id=caja.pk, usuario=self.usuario1, tipo="INGRESO",
+                concepto="Tardío", monto=Decimal("1.00"),
+            )
+
+    def test_pantalla_caja_renderiza_para_cajero_autenticado(self):
+        cliente = Client()
+        cliente.force_login(self.usuario1)
+        respuesta = cliente.get(reverse("caja:inicio"))
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Abrir una caja")

@@ -14,6 +14,7 @@ from apps.compras.services import recibir_compra, crear_compra, registrar_pago_c
 from apps.configuracion.models import Configuracion
 from apps.inventario.models import Inventario, MovimientoInventario
 from django.core.exceptions import ValidationError
+from apps.caja.models import Caja, MovimientoCaja
 
 class ComprasBaseTest(TestCase):
     """Pruebas de compras y asignación de almacén al lote (Fase 0)."""
@@ -119,6 +120,23 @@ class ComprasBaseTest(TestCase):
                 compra_id=self.compra.pk, usuario=self.usuario,
                 metodo_pago_id=self.metodo_pago.pk, monto=Decimal("50.01"),
             )
+
+    def test_pago_en_efectivo_registra_egreso_y_anulacion_lo_revierte(self):
+        efectivo = MetodoPago.objects.create(nombre="Efectivo")
+        caja = Caja.objects.create(
+            usuario=self.usuario, fecha_apertura=timezone.now(), monto_inicial=Decimal("100.00"),
+        )
+        pago = registrar_pago_compra(
+            compra_id=self.compra.pk, usuario=self.usuario, metodo_pago_id=efectivo.pk,
+            monto=Decimal("20.00"), caja_id=caja.pk,
+        )
+        self.assertTrue(MovimientoCaja.objects.filter(
+            referencia_tipo="COMPRA_PAGO", referencia_id=pago.pk, tipo="EGRESO",
+        ).exists())
+        anular_compra(compra_id=self.compra.pk, usuario=self.usuario)
+        self.assertTrue(MovimientoCaja.objects.filter(
+            referencia_tipo="ANULACION_COMPRA", referencia_id=self.compra.pk, tipo="INGRESO",
+        ).exists())
 
     def test_anular_compra_recibida_revierte_stock_y_registra_movimientos(self):
         vencimiento = timezone.localdate() + timedelta(days=60)
