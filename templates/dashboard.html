@@ -3,7 +3,7 @@
 {% block page_heading %}Resumen general{% endblock %}
 {% block content %}
 <div class="welcome-row"><div><span class="eyebrow">BIENVENIDO A CHOCOGEST</span><h1>Panel de control</h1><p>Este es el resumen de actividad de tu chocolatería.</p></div><div class="date-pill">● Operación diaria</div></div>
-<div class="stats-grid">
+<div class="stats-grid dashboard-stats">
   <article class="stat-card"><span class="stat-icon">▣</span><small>Productos activos</small><strong>{{ productos_count }}</strong><span class="stat-note">En catálogo</span></article>
   <article class="stat-card"><span class="stat-icon">♙</span><small>Clientes registrados</small><strong>{{ clientes_count }}</strong><span class="stat-note">Base de clientes</span></article>
   <article class="stat-card accent"><span class="stat-icon">S/</span><small>Ventas de hoy</small><strong>S/ {{ ventas_hoy|floatformat:2 }}</strong><span class="stat-note">Ventas registradas no anuladas</span></article>

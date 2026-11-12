@@ -855,3 +855,47 @@
 .void-sale-form { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; margin: 0; }
 .void-sale-form label { display: grid; gap: 4px; color: #76675e; font-size: 11px; }
 .void-sale-form input { height: 38px; border: 1px solid #e9ded6; border-radius: 8px; padding: 0 9px; }
+
+/* El POS comparte el ancho útil disponible sin comprimir el carrito. */
+.pos-layout, .catalog-panel, .cart-panel, .history-panel { min-width: 0; }
+.pos-layout { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); }
+.catalog-tools { min-width: 0; }
+.catalog-tools > * { min-width: 0; }
+.product-card, .product-info { min-width: 0; }
+.product-info h3 { overflow-wrap: anywhere; }
+.cart-panel { max-width: 100%; }
+.cart-line { min-width: 0; }
+.receipt { overflow-x: auto; }
+.receipt-table, .history-table { min-width: 560px; }
+.pos-heading > *, .cash-start > * { min-width: 0; }
+
+@media (max-width: 1023px) {
+  .pos-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); gap: 12px; }
+  .catalog-panel { padding: 16px; }
+  .product-grid { gap: 9px; }
+}
+@media (max-width: 850px) {
+  .pos-layout { grid-template-columns: minmax(0, 1fr); }
+  .cart-panel { position: static; }
+  .cart-items { max-height: 360px; }
+}
+@media (max-width: 600px) {
+  .pos-heading { flex-wrap: wrap; }
+  .pos-heading > div:first-child { flex: 1 1 100%; }
+  .pos-heading h1 { overflow-wrap: anywhere; }
+  .pos-stats { grid-template-columns: minmax(0, 1fr); }
+  .catalog-top { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .catalog-tools { flex-wrap: wrap; }
+  .catalog-tools > * { flex: 1 1 100%; width: 100%; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-bottom { flex-wrap: wrap; }
+  .cash-start { gap: 12px; padding: 17px; }
+  .cash-open-form > * { width: 100%; }
+  .receipt { max-width: 100%; padding: 18px; }
+  .receipt-brand { min-width: 0; }
+  .receipt-brand h1 { overflow-wrap: anywhere; font-size: 20px; }
+  .receipt-number { gap: 10px; flex-wrap: wrap; }
+  .receipt-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .receipt-totals { max-width: 100%; width: min(100%, 240px); }
+  .payment-entry { grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr) 22px; }
+}

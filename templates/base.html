@@ -23,54 +23,54 @@
     </a>
     <div class="nav-caption">MENÚ PRINCIPAL</div>
     <nav class="nav">
-      <a href="{% url 'dashboard' %}">▦ <span>Dashboard</span></a>
+      <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>▦ <span>Dashboard</span></a>
 
       {% if user.es_administrador or user.es_almacenero or user.es_vendedor %}
-        <a href="{% url 'productos:listado' %}">▣ <span>Productos</span></a>
+        <a class="{% if request.resolver_match.namespace == 'productos' %}active{% endif %}" href="{% url 'productos:listado' %}" {% if request.resolver_match.namespace == 'productos' %}aria-current="page"{% endif %}>▣ <span>Productos</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_vendedor %}
-        <a href="{% url 'clientes:listado' %}">♙ <span>Clientes</span></a>
+        <a class="{% if request.resolver_match.namespace == 'clientes' %}active{% endif %}" href="{% url 'clientes:listado' %}" {% if request.resolver_match.namespace == 'clientes' %}aria-current="page"{% endif %}>♙ <span>Clientes</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_almacenero %}
-        <a href="{% url 'proveedores:listado' %}">♧ <span>Proveedores</span></a>
+        <a class="{% if request.resolver_match.namespace == 'proveedores' %}active{% endif %}" href="{% url 'proveedores:listado' %}" {% if request.resolver_match.namespace == 'proveedores' %}aria-current="page"{% endif %}>♧ <span>Proveedores</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_almacenero %}
-        <a href="{% url 'compras:listado' %}">⇩ <span>Compras</span></a>
+        <a class="{% if request.resolver_match.namespace == 'compras' %}active{% endif %}" href="{% url 'compras:listado' %}" {% if request.resolver_match.namespace == 'compras' %}aria-current="page"{% endif %}>⇩ <span>Compras</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_almacenero or user.es_vendedor %}
-        <a href="{% url 'inventario:inicio' %}">▤ <span>Inventario</span></a>
-        <a href="{% url 'inventario:lotes' %}">▧ <span>Lotes</span></a>
-        <a href="{% url 'inventario:movimientos' %}">↕ <span>Kardex</span></a>
+        <a class="{% if request.resolver_match.view_name == 'inventario:inicio' or request.resolver_match.view_name == 'inventario:stock' or request.resolver_match.view_name == 'inventario:ajustar' or request.resolver_match.view_name == 'inventario:transferir' or request.resolver_match.view_name == 'inventario:almacen_listado' or request.resolver_match.view_name == 'inventario:almacen_crear' or request.resolver_match.view_name == 'inventario:almacen_editar' or request.resolver_match.view_name == 'inventario:almacen_eliminar' %}active{% endif %}" href="{% url 'inventario:inicio' %}" {% if request.resolver_match.view_name == 'inventario:inicio' or request.resolver_match.view_name == 'inventario:stock' or request.resolver_match.view_name == 'inventario:ajustar' or request.resolver_match.view_name == 'inventario:transferir' or request.resolver_match.view_name == 'inventario:almacen_listado' or request.resolver_match.view_name == 'inventario:almacen_crear' or request.resolver_match.view_name == 'inventario:almacen_editar' or request.resolver_match.view_name == 'inventario:almacen_eliminar' %}aria-current="page"{% endif %}>▤ <span>Inventario</span></a>
+        <a class="{% if request.resolver_match.view_name == 'inventario:lotes' or request.resolver_match.view_name == 'inventario:lote_detalle' or request.resolver_match.view_name == 'inventario:lote_estado' %}active{% endif %}" href="{% url 'inventario:lotes' %}" {% if request.resolver_match.view_name == 'inventario:lotes' or request.resolver_match.view_name == 'inventario:lote_detalle' or request.resolver_match.view_name == 'inventario:lote_estado' %}aria-current="page"{% endif %}>▧ <span>Lotes</span></a>
+        <a class="{% if request.resolver_match.view_name == 'inventario:movimientos' %}active{% endif %}" href="{% url 'inventario:movimientos' %}" {% if request.resolver_match.view_name == 'inventario:movimientos' %}aria-current="page"{% endif %}>↕ <span>Kardex</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_vendedor or user.es_cajero %}
-        <a href="{% url 'ventas:inicio' %}">▧ <span>Ventas / POS</span></a>
+        <a class="{% if request.resolver_match.namespace == 'ventas' %}active{% endif %}" href="{% url 'ventas:inicio' %}" {% if request.resolver_match.namespace == 'ventas' %}aria-current="page"{% endif %}>▧ <span>Ventas / POS</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_vendedor %}
-        <a href="{% url 'devoluciones:inicio' %}">↶ <span>Devoluciones</span></a>
+        <a class="{% if request.resolver_match.namespace == 'devoluciones' %}active{% endif %}" href="{% url 'devoluciones:inicio' %}" {% if request.resolver_match.namespace == 'devoluciones' %}aria-current="page"{% endif %}>↶ <span>Devoluciones</span></a>
       {% endif %}
 
       {% if user.es_administrador or user.es_cajero %}
-        <a href="{% url 'caja:inicio' %}">▣ <span>Caja</span></a>
+        <a class="{% if request.resolver_match.namespace == 'caja' %}active{% endif %}" href="{% url 'caja:inicio' %}" {% if request.resolver_match.namespace == 'caja' %}aria-current="page"{% endif %}>▣ <span>Caja</span></a>
       {% endif %}
 
       {% if user.es_administrador %}
-        <a href="{% url 'finanzas:inicio' %}">◈ <span>Finanzas</span></a>
-        <a href="{% url 'reportes:inicio' %}">📈 <span>Reportes</span></a>
-        <a href="{% url 'configuracion:inicio' %}">⚙ <span>Configuración</span></a>
-        <a href="{% url 'usuarios:listado' %}">👥 <span>Usuarios</span></a>
+        <a class="{% if request.resolver_match.namespace == 'finanzas' %}active{% endif %}" href="{% url 'finanzas:inicio' %}" {% if request.resolver_match.namespace == 'finanzas' %}aria-current="page"{% endif %}>◈ <span>Finanzas</span></a>
+        <a class="{% if request.resolver_match.namespace == 'reportes' %}active{% endif %}" href="{% url 'reportes:inicio' %}" {% if request.resolver_match.namespace == 'reportes' %}aria-current="page"{% endif %}>📈 <span>Reportes</span></a>
+        <a class="{% if request.resolver_match.namespace == 'configuracion' %}active{% endif %}" href="{% url 'configuracion:inicio' %}" {% if request.resolver_match.namespace == 'configuracion' %}aria-current="page"{% endif %}>⚙ <span>Configuración</span></a>
+        <a class="{% if request.resolver_match.namespace == 'usuarios' and request.resolver_match.url_name != 'perfil' %}active{% endif %}" href="{% url 'usuarios:listado' %}" {% if request.resolver_match.namespace == 'usuarios' and request.resolver_match.url_name != 'perfil' %}aria-current="page"{% endif %}>👥 <span>Usuarios</span></a>
       {% endif %}
 
       {% if user.is_superuser or user.is_staff %}
         <a href="/admin/">🔒 <span>Django Admin</span></a>
       {% endif %}
 
-      <a href="{% url 'usuarios:perfil' %}">♙ <span>Mi perfil</span></a>
+      <a class="{% if request.resolver_match.url_name == 'perfil' %}active{% endif %}" href="{% url 'usuarios:perfil' %}" {% if request.resolver_match.url_name == 'perfil' %}aria-current="page"{% endif %}>♙ <span>Mi perfil</span></a>
     </nav>
     <div class="sidebar-bottom"><span class="status-dot"></span> {{ user.rol.nombre|default:"Sistema operativo" }}</div>
   </aside>
