@@ -1,6 +1,7 @@
 from decimal import Decimal
 from datetime import timedelta
-from django.test import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
 from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
@@ -10,8 +11,9 @@ from apps.proveedores.models import Proveedor
 from apps.compras.models import Compra, DetalleCompra
 from apps.ventas.models import Venta, PagoVenta
 from apps.configuracion.models import MetodoPago
+from apps.caja.models import Caja, MovimientoCaja
 from apps.usuarios.models import Rol, Usuario
-from apps.ventas.services import registrar_venta
+from apps.ventas.services import registrar_venta, registrar_pago_venta, anular_venta
 
 class VentasBaseTest(TestCase):
     """Pruebas de ventas y filtrado de lotes por almacén (Fase 0)."""
@@ -97,7 +99,7 @@ class VentasBaseTest(TestCase):
             lineas=lineas,
             numero_venta="V-TEST-001",
         )
-        self.assertEqual(venta.total, Decimal("10.00"))
+        self.assertEqual(venta.total, Decimal("11.80"))
 
         # Verificamos que el lote A se descontó (queda 1)
         self.lote_a.refresh_from_db()
@@ -106,6 +108,123 @@ class VentasBaseTest(TestCase):
         # Verificamos que el lote B quedó intacto (sigue 20)
         self.lote_b.refresh_from_db()
         self.assertEqual(self.lote_b.cantidad_disponible, Decimal("20.000"))
+
+    def test_numero_igv_y_pagos_parciales(self):
+        tarjeta = MetodoPago.objects.create(nombre="Tarjeta")
+        venta = registrar_venta(
+            usuario=self.usuario, almacen_id=self.almacen_a.pk,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"),
+                     "precio_unitario": Decimal("5.00")}],
+            pagos=[{"metodo_pago_id": tarjeta.pk, "monto": Decimal("3.00")}],
+        )
+        self.assertEqual(venta.numero_venta, "VTA-000001")
+        self.assertEqual(venta.igv, Decimal("0.90"))
+        self.assertEqual(venta.total, Decimal("5.90"))
+        self.assertEqual(venta.estado, "PARCIAL")
+        registrar_pago_venta(
+            venta_id=venta.pk, usuario=self.usuario, metodo_pago_id=tarjeta.pk,
+            monto=Decimal("2.90"),
+        )
+        venta.refresh_from_db()
+        self.assertEqual(venta.estado, "PAGADA")
+        self.assertEqual(venta.saldo_pendiente, Decimal("0.00"))
+
+    def test_descuentos_por_linea_y_global_se_aplican_antes_del_igv(self):
+        venta = registrar_venta(
+            usuario=self.usuario, almacen_id=self.almacen_a.pk,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"),
+                     "precio_unitario": Decimal("5.00"), "descuento": Decimal("0.50")}],
+            descuento=Decimal("0.50"),
+        )
+        self.assertEqual(venta.subtotal, Decimal("5.00"))
+        self.assertEqual(venta.descuento, Decimal("1.00"))
+        self.assertEqual(venta.igv, Decimal("0.72"))
+        self.assertEqual(venta.total, Decimal("4.72"))
+
+    def test_pago_en_efectivo_exige_caja_y_registra_ingreso(self):
+        with self.assertRaisesMessage(ValidationError, "Abre una caja"):
+            registrar_venta(
+                usuario=self.usuario, almacen_id=self.almacen_a.pk,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"),
+                         "precio_unitario": Decimal("5.00")}],
+                pagos=[{"metodo_pago_id": self.metodo_pago.pk, "monto": Decimal("5.90")}],
+            )
+        caja = Caja.objects.create(
+            usuario=self.usuario, fecha_apertura=timezone.now(), monto_inicial=Decimal("0.00"),
+        )
+        venta = registrar_venta(
+            usuario=self.usuario, almacen_id=self.almacen_a.pk, caja=caja,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"),
+                     "precio_unitario": Decimal("5.00")}],
+            pagos=[{"metodo_pago_id": self.metodo_pago.pk, "monto": Decimal("5.90")}],
+        )
+        movimiento = MovimientoCaja.objects.get(referencia_tipo="VENTA", referencia_id=venta.pk)
+        self.assertEqual(movimiento.tipo, "INGRESO")
+        self.assertEqual(movimiento.monto, Decimal("5.90"))
+
+    def test_stock_reservado_es_opcional_y_se_guarda_por_detalle(self):
+        existencia = Inventario.objects.get(producto=self.producto, almacen=self.almacen_a)
+        existencia.stock_reservado = Decimal("1.000")
+        existencia.save(update_fields=["stock_reservado"])
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                usuario=self.usuario, almacen_id=self.almacen_a.pk,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("3.000"),
+                         "precio_unitario": Decimal("5.00")}],
+            )
+        venta = registrar_venta(
+            usuario=self.usuario, almacen_id=self.almacen_a.pk,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("3.000"),
+                     "precio_unitario": Decimal("5.00")}],
+            usar_stock_reservado=True,
+        )
+        self.assertEqual(venta.detalles.get().cantidad_reservada, Decimal("1.000"))
+        rol_admin = Rol.objects.create(nombre="Administrador")
+        admin = Usuario.objects.create_user(username="admin_reserva", password="password123", rol=rol_admin)
+        anular_venta(venta_id=venta.pk, usuario=admin, motivo="Restituir reserva")
+        existencia.refresh_from_db()
+        self.assertEqual(existencia.stock_actual, Decimal("3.000"))
+        self.assertEqual(existencia.stock_reservado, Decimal("1.000"))
+
+    def test_anular_venta_admin_restituye_lote_y_revierte_caja(self):
+        rol_admin = Rol.objects.create(nombre="Administrador")
+        admin = Usuario.objects.create_user(username="admin_ventas", password="password123", rol=rol_admin)
+        caja = Caja.objects.create(usuario=admin, fecha_apertura=timezone.now(), monto_inicial=Decimal("0.00"))
+        venta = registrar_venta(
+            usuario=admin, almacen_id=self.almacen_a.pk, caja=caja,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": Decimal("1.000"),
+                     "precio_unitario": Decimal("5.00")}],
+            pagos=[{"metodo_pago_id": self.metodo_pago.pk, "monto": Decimal("5.90")}],
+        )
+        anular_venta(venta_id=venta.pk, usuario=admin, motivo="Venta duplicada")
+        venta.refresh_from_db()
+        self.lote_a.refresh_from_db()
+        existencia = Inventario.objects.get(producto=self.producto, almacen=self.almacen_a)
+        self.assertEqual(venta.estado, "ANULADA")
+        self.assertEqual(self.lote_a.cantidad_disponible, Decimal("3.000"))
+        self.assertEqual(existencia.stock_actual, Decimal("3.000"))
+        self.assertEqual(venta.pagos.get().estado, "ANULADO")
+        tipos = list(MovimientoCaja.objects.filter(referencia_id=venta.pk).order_by("tipo").values_list("tipo", flat=True))
+        self.assertEqual(tipos, ["EGRESO", "INGRESO"])
+
+    def test_pos_cashless_crea_venta_y_muestra_historial_detalle_comprobante(self):
+        tarjeta = MetodoPago.objects.create(nombre="Tarjeta")
+        cliente = Client()
+        cliente.force_login(self.usuario)
+        self.assertEqual(cliente.get(reverse("ventas:inicio")).status_code, 200)
+        respuesta = cliente.post(reverse("ventas:inicio"), {
+            "almacen": str(self.almacen_a.pk),
+            "cliente": "",
+            "descuento_global": "0.00",
+            "carrito": '[{"producto_id":%d,"cantidad":"1.000","precio_unitario":"5.00","descuento":"0.00"}]' % self.producto.pk,
+            "pagos": '[{"metodo_pago_id":%d,"monto":"5.90","referencia":"OP-1"}]' % tarjeta.pk,
+            "modo_pago": "COBRAR",
+        })
+        venta = Venta.objects.get(estado="PAGADA")
+        self.assertRedirects(respuesta, reverse("ventas:detalle", kwargs={"pk": venta.pk}))
+        self.assertEqual(cliente.get(reverse("ventas:historial")).status_code, 200)
+        self.assertEqual(cliente.get(reverse("ventas:detalle", kwargs={"pk": venta.pk})).status_code, 200)
+        self.assertEqual(cliente.get(reverse("ventas:comprobante", kwargs={"pk": venta.pk})).status_code, 200)
 
     def test_registrar_venta_falla_si_almacen_no_tiene_lotes_suficientes(self):
         """Si Tienda A solo tiene 3, pedir 5 debe fallar aunque Tienda B tenga stock."""

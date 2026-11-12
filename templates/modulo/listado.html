@@ -36,9 +36,13 @@
       <select class="form-select" name="almacen"><option value="">Todos los almacenes</option>{% for almacen in almacenes %}<option value="{{ almacen.pk }}" {% if almacen_filtro == almacen.pk|stringformat:"s" %}selected{% endif %}>{{ almacen.nombre }}</option>{% endfor %}</select>
       <select class="form-select" name="tipo"><option value="">Todos los movimientos</option>{% for clave, etiqueta in tipos_movimiento %}<option value="{{ clave }}" {% if tipo_filtro == clave %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select>
       <label>Desde <input type="date" name="desde" value="{{ desde }}"></label><label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
+    {% elif filtro_ventas %}
+      <select class="form-select" name="estado"><option value="">Todos los estados</option>{% for clave, etiqueta in estados_venta %}<option value="{{ clave }}" {% if estado_filtro == clave %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}</select>
+      <select class="form-select" name="cliente"><option value="">Todos los clientes</option>{% for cliente in clientes %}<option value="{{ cliente.pk }}" {% if cliente_filtro == cliente.pk|stringformat:"s" %}selected{% endif %}>{{ cliente.nombres }}</option>{% endfor %}</select>
+      <label>Desde <input type="date" name="desde" value="{{ desde }}"></label><label>Hasta <input type="date" name="hasta" value="{{ hasta }}"></label>
     {% endif %}
     <button class="btn-secondary" type="submit">{% if proveedores %}Filtrar{% else %}Buscar{% endif %}</button>
-    {% if q or estado_filtro or proveedor_filtro or desde or hasta or almacen_filtro or alerta_filtro or vigencia_filtro or producto_filtro or tipo_filtro %}
+    {% if q or estado_filtro or proveedor_filtro or cliente_filtro or desde or hasta or almacen_filtro or alerta_filtro or vigencia_filtro or producto_filtro or tipo_filtro %}
       <button type="button" class="btn-secondary" onclick="this.form.querySelectorAll('input').forEach(campo => campo.value=''); this.form.querySelectorAll('select').forEach(campo => campo.selectedIndex=0); this.form.submit();" title="Limpiar búsqueda y filtros">✕ Limpiar</button>
     {% endif %}
   </form>

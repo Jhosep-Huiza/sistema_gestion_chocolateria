@@ -7,4 +7,5 @@ class DetalleVenta(models.Model):
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
     descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    cantidad_reservada = models.DecimalField(max_digits=12, decimal_places=3, default=0)
     class Meta: db_table = "detalle_ventas"

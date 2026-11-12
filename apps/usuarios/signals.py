@@ -19,6 +19,8 @@ def guardar_estado_anterior_venta(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Venta)
 def auditar_anulacion_venta(sender, instance, created, **kwargs):
+    if getattr(instance, "_auditoria_registrada", False):
+        return
     if instance.estado != "ANULADA" or (not created and instance._estado_anterior_auditoria == "ANULADA"):
         return
     _, ip = contexto_auditoria()

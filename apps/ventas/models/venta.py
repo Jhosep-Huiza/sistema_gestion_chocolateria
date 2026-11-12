@@ -17,3 +17,14 @@ class Venta(models.Model):
     observaciones = models.TextField(blank=True)
     class Meta: db_table = "ventas"; ordering = ["-fecha_venta"]
     def __str__(self): return self.numero_venta
+
+    @property
+    def monto_pagado(self):
+        from decimal import Decimal
+        from django.db.models import Sum
+        return self.pagos.filter(estado="CONFIRMADO").aggregate(total=Sum("monto"))["total"] or Decimal("0.00")
+
+    @property
+    def saldo_pendiente(self):
+        from decimal import Decimal
+        return max(self.total - self.monto_pagado, Decimal("0.00"))

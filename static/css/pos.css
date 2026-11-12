@@ -795,3 +795,63 @@
     margin-bottom: 0;
   }
 }
+
+.pos-cash-note {
+  border: 1px solid #ead9b8;
+  border-radius: 10px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  background: #fff9ec;
+  color: #80633c;
+  font-size: 12px;
+}
+.pos-cash-note.open {
+  background: #eef5ed;
+  border-color: #d5e6d2;
+  color: #567251;
+}
+.fefo-preview {
+  display: block;
+  min-height: 24px;
+  margin-top: 7px;
+  color: #907968;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.cart-quantity,
+.cart-line-discount {
+  display: inline-block;
+  width: 78px;
+  height: 27px;
+  margin: 7px 5px 0 0;
+  padding: 3px 6px;
+  border: 1px solid #e9ded4;
+  border-radius: 6px;
+  color: #514137;
+  font: inherit;
+  font-size: 10px;
+}
+.cart-line-discount { width: 92px; }
+.cart-line-amount { align-self: center; font-size: 11px; color: #513b2e; }
+.discount-field { display: block; margin: 13px 0 6px; color: #76675e; font-size: 11px; font-weight: 700; }
+#discountGlobal {
+  box-sizing: border-box;
+  width: 100%;
+  height: 38px;
+  border: 1px solid #e9dfd6;
+  border-radius: 9px;
+  padding: 0 10px;
+  font: inherit;
+}
+.payment-heading { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; color: #574235; font-size: 11px; }
+.add-payment { border: 0; background: none; color: #795239; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+.payment-entry { display: grid; grid-template-columns: 1fr 82px 1fr 24px; gap: 5px; margin-top: 7px; }
+.payment-entry select,
+.payment-entry input { min-width: 0; height: 34px; border: 1px solid #e9ded6; border-radius: 7px; padding: 0 6px; font: inherit; font-size: 10px; }
+.remove-payment { border: 0; background: none; color: #a85b54; font-size: 18px; cursor: pointer; }
+.pending-button { width: 100%; margin-top: 8px; border: 1px solid #e7dcd2; border-radius: 9px; background: #fff; color: #63422f; padding: 10px; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.pending-button:disabled { opacity: .45; cursor: not-allowed; }
+.receipt-logo { width: 43px; height: 43px; border-radius: 12px; object-fit: cover; }
+.void-sale-form { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; margin: 0; }
+.void-sale-form label { display: grid; gap: 4px; color: #76675e; font-size: 11px; }
+.void-sale-form input { height: 38px; border: 1px solid #e9ded6; border-radius: 8px; padding: 0 9px; }
